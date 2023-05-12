@@ -120,6 +120,25 @@ for breath in generator:
     flow, pressure = breath['flow'], breath['pressure']
 ```
 
+**Note**
+For the new format, use:
+
+```python
+from io import open  # this import ensures python 2/3 compatibility
+
+from ventmap.raw_utils import PB840File
+
+# create generator that will iterate through file. Specify False to ensure that
+# breaths without BE markers will be kept. If you say True, then breaths
+# without BE will be dropped. This can occasionally happen due to software error
+# or because a breath was cutoff at the end of a file.
+generator = PB840File(open(<filepath to vent data>), new_format=True).extract_raw(False)
+for breath in generator:
+    # breath data is output in dictionary format
+    flow, pressure = breath['flow'], breath['pressure']
+```
+
+
 This process only works if you are using the Puritan Bennet 840. However if you have a different
 ventilator then you can utilize this too. VentMap currently supports 100 Hz data input files in
 same format as the PB-840.
@@ -165,6 +184,19 @@ from ventmap.breath_meta import get_file_breath_meta
 breath_meta = get_file_breath_meta(<filepath to vent data>)
 # If you want a pandas DataFrame then you can set the optional argument to_data_frame=True
 breath_meta = get_file_breath_meta(<filepath to vent data>, to_data_frame=True)
+```
+
+**Note**
+For the new file format, use:
+
+```python
+from ventmap.breath_meta import get_file_breath_meta
+
+# Data output is normally in list format. Ordering information can be found in
+# ventmap.constants.META_HEADER.
+breath_meta = get_file_breath_meta(<filepath to vent data>, new_format=True)
+# If you want a pandas DataFrame then you can set the optional argument to_data_frame=True
+breath_meta = get_file_breath_meta(<filepath to vent data>, new_format=True, to_data_frame=True)
 ```
 
 
