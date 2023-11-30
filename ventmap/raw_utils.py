@@ -52,7 +52,7 @@ class VentilatorBase(object):
 
         if new_format:
             df = pd.read_csv(self.descriptor)
-            first_line = df.iloc[1].breath_datetime
+            first_line = str(df.iloc[1].breath_datetime)
             filtered_df = df[["flow", "pressure"]]
 
             new_row = pd.DataFrame({'flow':first_line, 'pressure':''}, index=[0])
