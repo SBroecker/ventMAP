@@ -27,7 +27,7 @@ class BadDescriptorError(Exception):
 
 
 class VentilatorBase(object):
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, new_format=False):
         """
         :param descriptor: The file descriptor to use
         """
@@ -42,15 +42,31 @@ class VentilatorBase(object):
         self.cur_abs_time = None
         self.vent_bn = 0
         self.rel_bn = 0
+
         try:
             self.descriptor = clear_descriptor_null_bytes(self.descriptor)
         except UnicodeDecodeError:
             raise BadDescriptorError('You seem to have opened a file with garbled bytes. you should open it using io.open(file, encoding="ascii", errors="ignore"')
 
         self.descriptor.seek(0)
-        first_line = self.descriptor.readline()
+
+        if new_format:
+            df = pd.read_csv(self.descriptor)
+            first_line = str(df.iloc[1].breath_datetime)
+            filtered_df = df[["flow", "pressure"]]
+
+            new_row = pd.DataFrame({'flow':first_line, 'pressure':''}, index=[0])
+            filtered_df = pd.concat([new_row, filtered_df]).reset_index(drop=True)
+
+            self.descriptor = StringIO()
+            filtered_df.to_csv(self.descriptor, sep=",", header=False, index=False)
+        else:
+            first_line = self.descriptor.readline()
+        
+
         self.bs_col, self.ncol, self.ts_1st_col, self.ts_1st_row = detect_version_v2(first_line)
         self.descriptor.seek(0)
+
 
     def get_data(self, flow, pressure):
         return {
@@ -90,6 +106,7 @@ class VentilatorBase(object):
 
     def extract_raw(self,
                     skip_breaths_without_be,
+                    new_format=False,
                     rel_bn_interval=[],
                     vent_bn_interval=[],
                     spec_rel_bns=[],
@@ -205,6 +222,7 @@ class HundredHzFile(VentilatorBase):
 
 def extract_raw(descriptor,
                 ignore_missing_bes,
+                new_format=False,
                 rel_bn_interval=[],
                 vent_bn_interval=[],
                 spec_rel_bns=[],
@@ -213,8 +231,8 @@ def extract_raw(descriptor,
     Deprecated method for extracting VWD. Newer implementations should look at
     using a specific ventilator class like PB840File.extract_raw
     """
-    pb840 = PB840File(descriptor)
-    return pb840.extract_raw(ignore_missing_bes, rel_bn_interval, vent_bn_interval, spec_rel_bns, spec_vent_bns)
+    pb840 = PB840File(descriptor, new_format=new_format)
+    return pb840.extract_raw(ignore_missing_bes, new_format, rel_bn_interval, vent_bn_interval, spec_rel_bns, spec_vent_bns)
 
 
 def real_time_extractor(descriptor,
