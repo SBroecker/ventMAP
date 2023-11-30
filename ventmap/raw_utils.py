@@ -27,7 +27,7 @@ class BadDescriptorError(Exception):
 
 
 class VentilatorBase(object):
-    def __init__(self, descriptor, date_format=None, new_format=False):
+    def __init__(self, descriptor, new_format=False):
         """
         :param descriptor: The file descriptor to use
         """
@@ -67,8 +67,6 @@ class VentilatorBase(object):
         self.bs_col, self.ncol, self.ts_1st_col, self.ts_1st_row = detect_version_v2(first_line)
         self.descriptor.seek(0)
 
-        self.date_format = date_format
-
 
     def get_data(self, flow, pressure):
         return {
@@ -91,10 +89,7 @@ class VentilatorBase(object):
         try:
             self.abs_bs_time = parser.parse(ts)
         except:
-            if self.date_format:
-                self.abs_bs_time = datetime.strptime(ts, self.date_format)
-            else:    
-                self.abs_bs_time = datetime.strptime(ts, IN_DATETIME_FORMAT)
+            self.abs_bs_time = datetime.strptime(ts, IN_DATETIME_FORMAT)
 
     def set_abs_bs_time(self, row):
         if self.ts_1st_col:
